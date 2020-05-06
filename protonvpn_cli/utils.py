@@ -302,6 +302,17 @@ def make_ovpn_template():
 
     logger.debug("remote and proto lines removed")
 
+    # Issue #162
+    if os.path.isfile("/proc/sys/net/ipv6/conf/all/disable_ipv6"):
+        ipv6_state = subprocess.run(
+            ["sysctl", "-n", "net.ipv6.conf.all.disable_ipv6"],
+            stdout=subprocess.PIPE)
+        if int(ipv6_state.stdout.decode("utf-8")):
+            logger.debug("IPv6 is disabled, adding IPv6 pull-filters")
+            with open(TEMPLATE_FILE, "a") as f:
+                f.write('\npull-filter ignore "ifconfig-ipv6 "\n')
+                f.write('pull-filter ignore "route-ipv6 "\n')
+
     change_file_owner(TEMPLATE_FILE)
 
 
